@@ -1,5 +1,23 @@
 #pragma once
 
+// Sized to match the module's own storage arrays (key_colors.c:
+// key_colors[DYNAMIC_KEYMAP_LAYER_COUNT][RGB_MATRIX_LED_COUNT]) — both
+// macros are already known by the time config.h is processed, so this
+// needs no user math. Override in your keymap's config.h only if you want
+// to shrink it (e.g. fewer layers than DYNAMIC_KEYMAP_LAYER_COUNT actually
+// use key_colors) to save EEPROM.
+#ifndef EECONFIG_KB_DATA_SIZE
+#    define EECONFIG_KB_DATA_SIZE (DYNAMIC_KEYMAP_LAYER_COUNT * RGB_MATRIX_LED_COUNT * 7)
+#endif
+
+// key_colors_hid.c owns raw_hid_receive_kb and chains keypeek in itself
+// (see hid_glue/key_colors_hid.c). If srwi/keypeek_layer_notify is also in
+// this keymap, stop it from defining its own copy of that function — two
+// definitions would fail to link. No-op if keypeek isn't present.
+#ifndef KEYPEEK_DISABLE_RAW_HID_HANDLER
+#    define KEYPEEK_DISABLE_RAW_HID_HANDLER
+#endif
+
 #ifdef SPLIT_KEYBOARD
 
 // Split-sync RPC IDs. Folded into the shared cross-keyboard transaction-id

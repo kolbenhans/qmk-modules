@@ -7,7 +7,13 @@
 // its internals directly.
 #include QMK_KEYBOARD_H
 #include "key_colors.h"
-#include "keypeek_layer_notify.h" // keypeek
+
+// keypeek: optional, not a key_colors dependency — auto-detected only if the
+// keymap also lists srwi/keypeek_layer_notify in keymap.json.
+#if __has_include("keypeek_layer_notify.h")
+#    include "keypeek_layer_notify.h"
+#    define KEY_COLORS_HAS_KEYPEEK
+#endif
 
 #ifdef RAW_ENABLE
 
@@ -68,9 +74,10 @@ static void handle_get_lock_flags(const uint8_t *req) {
 
 // WebGUI key-color/lock-flag/blink-color commands (0xA5-0xAB), sent via WebHID.
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
-    // --- keypeek: claims its own subscribe/keepalive packets, ignores everything else ---
+#ifdef KEY_COLORS_HAS_KEYPEEK
+    // keypeek claims its own subscribe/keepalive packets, ignores everything else
     if (keypeek_handle_command(data, length)) return;
-    // --- end keypeek ---
+#endif
 
     if (length < 2 || data[0] != 0x02) return;
 

@@ -28,6 +28,10 @@ brings with it, `RGB_MATRIX_COMMUNITY_MODULE_key_colors` — how you activate
 that effect (boot default and or a keycode) is up to
 you, see below.
 
+No dependency on `srwi/keypeek_layer_notify` — if your keymap also lists that
+module, `key_colors_hid.c` auto-detects it (`__has_include`) and forwards its
+packets; nothing to configure either way.
+
 **`keymap.json`:**
 
 ```json
@@ -40,9 +44,12 @@ you, see below.
 
 ```c
 #define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_COMMUNITY_MODULE_key_colors // optional — boot default effect
-#define EECONFIG_KB_DATA_SIZE <layers * leds * 7>
 #define WEAR_LEVELING_BACKING_SIZE (WEAR_LEVELING_LOGICAL_SIZE * 2) // only if build fails to fit
 ```
+
+`EECONFIG_KB_DATA_SIZE` is sized automatically (`key_colors/config.h`, from
+`DYNAMIC_KEYMAP_LAYER_COUNT * RGB_MATRIX_LED_COUNT * 7`) — no need to set it
+yourself unless you want to shrink it.
 
 > [!IMPORTANT]
 > **Split boards only** — add this on top of the `config.h` block above.
@@ -105,8 +112,8 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 ```
 
-Place `USER01` somewhere in your `LAYOUT()`. Already have a
-`process_record_user`? Add the `case` to your existing `switch`.
+Place `USER01` somewhere in your `LAYOUT()` (or define a key later in VIAL/Pipette).
+Already have a `process_record_user`? Add the `case` to your existing `switch`.
 
 ---
 
