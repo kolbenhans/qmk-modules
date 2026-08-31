@@ -20,6 +20,15 @@ add a second block (duplicate JSON key, one silently wins).
 Host-assigned per-key/per-layer RGB, EEPROM-persisted, delta-synced across
 split halves. Custom RGB Matrix effect: `RGB_MATRIX_COMMUNITY_MODULE_key_colors`.
 
+---
+<details>
+<summary>Vorschau</summary>
+<img width="800" height="584" alt="grafik" src="https://github.com/user-attachments/assets/bbb76253-cf4d-4f17-ad7f-bda5129314bf" />
+
+</details>
+
+---
+
 **`keymap.json`:**
 
 ```json
@@ -99,6 +108,14 @@ Already have a `process_record_user`? Add just the `case` to your existing `swit
 ---
 
 ## `audio_visualizer`
+
+---
+<details>
+<summary>Vorschau</summary>
+<img width="666" height="938" alt="grafik" src="https://github.com/user-attachments/assets/f0138e0e-260f-4282-a9fe-83fb7191b395" />
+</details>
+
+---
 
 Entry-wave transition + renders whatever's pushed into VialRGB's
 `g_direct_mode_colors` (host-side FASTSET). Custom RGB Matrix effect:
