@@ -22,7 +22,7 @@ split halves. Custom RGB Matrix effect: `RGB_MATRIX_COMMUNITY_MODULE_key_colors`
 
 ---
 <details>
-<summary>Vorschau</summary>
+<summary>Preview</summary>
 <img width="800" height="584" alt="grafik" src="https://github.com/user-attachments/assets/bbb76253-cf4d-4f17-ad7f-bda5129314bf" />
 
 </details>
@@ -111,7 +111,7 @@ Already have a `process_record_user`? Add just the `case` to your existing `swit
 
 ---
 <details>
-<summary>Vorschau</summary>
+<summary>Preview</summary>
 <img width="666" height="938" alt="grafik" src="https://github.com/user-attachments/assets/f0138e0e-260f-4282-a9fe-83fb7191b395" />
 </details>
 
