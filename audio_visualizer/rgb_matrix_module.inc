@@ -1,12 +1,13 @@
-RGB_MATRIX_EFFECT(viz_frame)
+RGB_MATRIX_EFFECT(audio_visualizer)
 
 #ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
-#include "viz_relay.h"
+#include "audio_visualizer.h"
 
-// ─── Entry wave — plays once on switching into viz_frame, before external ───
-// frames start arriving. Ignores RGB_MATRIX_USE_LIMITS on purpose: sweeps the
-// full board geometry so both halves animate from the same shared timer.
+// ─── Entry wave — plays once on switching into audio_visualizer, before ────
+// external frames start arriving. Ignores RGB_MATRIX_USE_LIMITS on purpose:
+// sweeps the full board geometry so both halves animate from the same
+// shared timer.
 
 #define VISUALIZER_BRIGHTNESS_LIMIT 80
 
@@ -19,11 +20,11 @@ static uint8_t vis_scale(uint8_t value) {
 #define ENTRY_WAVE_DURATION_MS ((224 + ENTRY_WAVE_WIDTH) * ENTRY_WAVE_STEP_MS)
 
 static bool render_entry_wave(void) {
-    if (!viz_relay_running()) return false;
+    if (!audio_visualizer_running()) return false;
 
-    uint32_t elapsed = viz_relay_elapsed();
+    uint32_t elapsed = audio_visualizer_elapsed();
     if (elapsed > ENTRY_WAVE_DURATION_MS) {
-        viz_relay_stop();
+        audio_visualizer_stop();
         return false;
     }
 
@@ -62,7 +63,7 @@ static bool render_entry_wave(void) {
 extern HSV g_direct_mode_colors[RGB_MATRIX_LED_COUNT];
 #endif
 
-static bool viz_frame(effect_params_t *params) {
+static bool audio_visualizer(effect_params_t *params) {
     if (render_entry_wave()) return false;
 #ifdef RGB_MATRIX_EFFECT_VIALRGB_DIRECT
     RGB_MATRIX_USE_LIMITS(led_min, led_max);

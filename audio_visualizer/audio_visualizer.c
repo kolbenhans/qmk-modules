@@ -2,7 +2,7 @@
 #ifdef SPLIT_KEYBOARD
 #    include "transactions.h"
 #endif
-#include "viz_relay.h"
+#include "audio_visualizer.h"
 #include <string.h>
 
 ASSERT_COMMUNITY_MODULES_MIN_API_VERSION(1, 0, 0);
@@ -23,15 +23,15 @@ static void entry_wave_start(void) {
     entry_wave_timer  = timer_read32();
 }
 
-bool viz_relay_running(void) {
+bool audio_visualizer_running(void) {
     return entry_wave_active;
 }
 
-uint32_t viz_relay_elapsed(void) {
+uint32_t audio_visualizer_elapsed(void) {
     return timer_elapsed32(entry_wave_timer);
 }
 
-void viz_relay_stop(void) {
+void audio_visualizer_stop(void) {
     entry_wave_active = false;
 }
 
@@ -51,16 +51,16 @@ static void entry_wave_sync_handler(uint8_t in_buflen, const void *in_data, uint
 // too — a plain entry_wave_start() only fires where it's called, which is
 // always the master (raw HID / key events never reach the slave directly).
 // Nothing to push on a non-split board — one half is the whole board.
-void viz_relay_trigger(void) {
+void audio_visualizer_trigger(void) {
     entry_wave_start();
 #ifdef SPLIT_KEYBOARD
     if (is_keyboard_master()) {
-        transaction_rpc_send(VIZ_RELAY_ENTRY_WAVE_STARTUP, 0, NULL);
+        transaction_rpc_send(AUDIO_VISUALIZER_ENTRY_WAVE_STARTUP, 0, NULL);
     }
 #endif
 }
 
-// ─── Direct-mode (viz_frame) split sync ─────────────────────────────────────
+// ─── Direct-mode (audio_visualizer) split sync ──────────────────────────────
 // Split-only: g_direct_mode_colors is filled via Raw HID FASTSET, which only
 // reaches the master half over USB — the slave half needs its portion pushed
 // over the split link explicitly. On a non-split board g_direct_mode_colors
@@ -86,27 +86,27 @@ static void rgb_direct_sync_handler(uint8_t in_buflen, const void *in_data, uint
 
 #endif
 
-void housekeeping_task_viz_relay(void) {
+void housekeeping_task_audio_visualizer(void) {
 #if defined(SPLIT_KEYBOARD) && defined(RGB_MATRIX_EFFECT_VIALRGB_DIRECT)
     if (!is_keyboard_master()) return;
-    if (rgb_matrix_get_mode() != RGB_MATRIX_COMMUNITY_MODULE_viz_frame) return;
+    if (rgb_matrix_get_mode() != RGB_MATRIX_COMMUNITY_MODULE_audio_visualizer) return;
 
     static uint32_t last_sync = 0;
     if (timer_elapsed32(last_sync) < 20) return;
     last_sync = timer_read32();
 
     uint8_t remote_offset = is_keyboard_left() ? SYNC_HALF_SIZE : 0;
-    transaction_rpc_send(VIZ_RELAY_SYNC_RGB_DIRECT, SYNC_HALF_SIZE * sizeof(HSV), &g_direct_mode_colors[remote_offset]);
+    transaction_rpc_send(AUDIO_VISUALIZER_SYNC_RGB_DIRECT, SYNC_HALF_SIZE * sizeof(HSV), &g_direct_mode_colors[remote_offset]);
 #endif
 }
 
 // ─── Module lifecycle ────────────────────────────────────────────────────────
 
-void keyboard_post_init_viz_relay(void) {
+void keyboard_post_init_audio_visualizer(void) {
 #ifdef SPLIT_KEYBOARD
-    transaction_register_rpc(VIZ_RELAY_ENTRY_WAVE_STARTUP, entry_wave_sync_handler);
+    transaction_register_rpc(AUDIO_VISUALIZER_ENTRY_WAVE_STARTUP, entry_wave_sync_handler);
 #    ifdef RGB_MATRIX_EFFECT_VIALRGB_DIRECT
-    transaction_register_rpc(VIZ_RELAY_SYNC_RGB_DIRECT, rgb_direct_sync_handler);
+    transaction_register_rpc(AUDIO_VISUALIZER_SYNC_RGB_DIRECT, rgb_direct_sync_handler);
 #    endif
 #endif
 }

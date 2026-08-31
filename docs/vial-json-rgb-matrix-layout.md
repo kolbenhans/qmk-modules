@@ -1,6 +1,6 @@
 # Requirement: `rgb_matrix.layout` in your keymap's `vial.json`
 
-Not needed to build or flash `key_colors`/`viz_relay` themselves — needed by
+Not needed to build or flash `key_colors`/`audio_visualizer` themselves — needed by
 their companion host-side tools once you actually want to use them:
 
 - **`key_colors`' WebGUI**: its whole wire protocol (`key_colors_hid.c`)
@@ -12,7 +12,7 @@ their companion host-side tools once you actually want to use them:
   `rgb_matrix.layout`'s `matrix` field (paired with each entry's position in
   the array, which *is* the LED index). Without it, the WebGUI can't
   correctly address any key.
-- **`viz_relay`'s companion (`viz-gui-rs`)**: needs the same mapping *plus*
+- **`audio_visualizer`'s companion (`viz-gui-rs`)**: needs the same mapping *plus*
   `x`/`y`, for its spatially-aware effects (Bars/Waterdrop) to place color
   by physical LED position, not just by index.
 

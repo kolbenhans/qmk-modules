@@ -10,12 +10,14 @@
 #    define EECONFIG_KB_DATA_SIZE (DYNAMIC_KEYMAP_LAYER_COUNT * RGB_MATRIX_LED_COUNT * 7)
 #endif
 
-// key_colors_hid.c owns raw_hid_receive_kb and chains keypeek in itself
-// (see hid_glue/key_colors_hid.c). If srwi/keypeek_layer_notify is also in
-// this keymap, stop it from defining its own copy of that function — two
-// definitions would fail to link. No-op if keypeek isn't present.
+// key_colors_hid.c owns raw_hid_receive_kb, chains keypeek/audio_visualizer
+// in itself if present — stop them defining their own copy (duplicate
+// symbol). No-op if the other module isn't present.
 #ifndef KEYPEEK_DISABLE_RAW_HID_HANDLER
 #    define KEYPEEK_DISABLE_RAW_HID_HANDLER
+#endif
+#ifndef AUDIO_VISUALIZER_DISABLE_RAW_HID_HANDLER
+#    define AUDIO_VISUALIZER_DISABLE_RAW_HID_HANDLER
 #endif
 
 #ifdef SPLIT_KEYBOARD
