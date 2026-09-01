@@ -8,17 +8,19 @@ git submodule add https://github.com/kolbenhans/qmk-modules.git modules/kolbenha
 git submodule update --init --recursive
 ```
 
-Enable the module(s) you want in your keymap's `keymap.json` (identifier per
-module below). No `keymap.json` yet? Create one with just the `modules`
-array shown below.
+Add the module identifier (below) to your keymap's `keymap.json`
+`"modules": [...]` array. No `keymap.json` yet? Create one with just that
+array. Already have one with entries? Add to the existing array — don't
+add a second `"modules"` block (duplicate JSON key, one silently wins).
 
-Already have one? Merge into its existing `"modules": [...]` array — don't
-add a second block (duplicate JSON key, one silently wins).
+**LED layout data** ([`key_colors`' WebGUI](https://github.com/kolbenhans/qmk-webgui),
+[`audio_visualizer`'s companion](https://github.com/kolbenhans/audio-visualizer-gui)):
+see [docs/vial-json-rgb-matrix-layout.md](docs/vial-json-rgb-matrix-layout.md).
 
 ## `key_colors`
 
-Host-assigned per-key/per-layer RGB, EEPROM-persisted, delta-synced across
-split halves. Custom RGB Matrix effect: `RGB_MATRIX_COMMUNITY_MODULE_key_colors`.
+Per-key/per-layer RGB, EEPROM-persisted, split-synced. Effect:
+`RGB_MATRIX_COMMUNITY_MODULE_key_colors`.
 
 **`keymap.json`:**
 
@@ -30,21 +32,21 @@ split halves. Custom RGB Matrix effect: `RGB_MATRIX_COMMUNITY_MODULE_key_colors`
 
 **`config.h`:**
 
-```c
-#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_COMMUNITY_MODULE_key_colors // optional — boot default effect
-#define WEAR_LEVELING_BACKING_SIZE (WEAR_LEVELING_LOGICAL_SIZE * 2) // only if build fails to fit
-```
-
 > [!IMPORTANT]
-> **Split boards only**, on top of the `config.h` block above:
+> **Split boards only**,
 >
 > ```c
-> // only if you get "undeclared identifier" (vial-qmk older than
-> // SPLIT_TRANSACTION_IDS_MODULE_* support):
+> // vial-qmk build if you get "undeclared identifier"
 > #define SPLIT_TRANSACTION_IDS_USER \
 >     KEY_COLORS_COLORS_DELTA, KEY_COLORS_BLINK_DELTA, KEY_COLORS_LOCK_FLAGS_DELTA, \
 >     KEY_COLORS_COMMIT, KEY_COLORS_STARTUP
 > ```
+
+```c
+#define RGB_MATRIX_DEFAULT_MODE RGB_MATRIX_COMMUNITY_MODULE_key_colors // optional — boot default effect
+// uncomment if build fails to fit
+// #define WEAR_LEVELING_BACKING_SIZE (WEAR_LEVELING_LOGICAL_SIZE * 2)
+```
 
 **`rules.mk`:**
 
@@ -54,7 +56,7 @@ SRC += key_colors_hid.c
 ```
 
 Copy [`hid_glue/key_colors_hid.c`](hid_glue/key_colors_hid.c) into your keymap
-folder, beside its `rules.mk` — same file for split and non-split.
+folder, beside `rules.mk`.
 
 ```
 vial-qmk/
@@ -73,7 +75,7 @@ vial-qmk/
                 └── ...
 ```
 
-**`keymap.c`** (optional — way back into `key_colors` mode if another rgb effect had been activated):
+**`keymap.c`** (optional — key to switch back into `key_colors` mode):
 
 ```c
 #include "key_colors.h"
@@ -93,16 +95,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 }
 ```
 
-Place `USER01` somewhere in your `LAYOUT()` (or define a key later in VIAL/Pipette).
-Already have a `process_record_user`? Add just the `case` to your existing `switch`.
+Place `USER01` in your `LAYOUT()` (or bind later in VIAL/Pipette). Existing
+`process_record_user`? Add just the `case`.
 
 ---
 
 ## `audio_visualizer`
 
-Entry-wave transition + renders whatever's pushed into VialRGB's
-`g_direct_mode_colors` (host-side FASTSET). Custom RGB Matrix effect:
-`RGB_MATRIX_COMMUNITY_MODULE_audio_visualizer`.
+Entry-wave transition + renders VialRGB's `g_direct_mode_colors` (host FASTSET).
+Effect: `RGB_MATRIX_COMMUNITY_MODULE_audio_visualizer`.
 
 **`keymap.json`:**
 
@@ -112,14 +113,8 @@ Entry-wave transition + renders whatever's pushed into VialRGB's
 }
 ```
 
-**`config.h`:**
-
-```c
-#define VIALRGB_ENABLE
-```
-
 > [!IMPORTANT]
-> **Split boards only**, on top of the `config.h` block above:
+> **Split boards only**, in `config.h`:
 >
 > ```c
 > #define RPC_M2S_BUFFER_SIZE <at least (RGB_MATRIX_LED_COUNT / 2) * 3>
@@ -134,11 +129,12 @@ Entry-wave transition + renders whatever's pushed into VialRGB's
 
 ```make
 RGB_MATRIX_ENABLE = yes # required
+VIALRGB_ENABLE = yes    # required — skip if your keymap already sets this
 SRC += audio_visualizer_hid.c
 ```
 
 Copy [`hid_glue/audio_visualizer_hid.c`](hid_glue/audio_visualizer_hid.c) into
-your keymap folder, beside its `rules.mk` — same file for split and non-split.
+your keymap folder, beside `rules.mk`.
 
 ```
 vial-qmk/
@@ -161,5 +157,4 @@ vial-qmk/
 
 ## Running modules together
 
-Copy each module's own `hid_glue` file — they auto-detect each other and
-compose, no extra setup, no combined file to pick instead.
+Copy each module's own `hid_glue` file. Auto-composes, no extra setup.
