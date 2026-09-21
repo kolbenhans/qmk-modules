@@ -29,9 +29,18 @@ bool audio_visualizer_hid_handle_command(uint8_t *data, uint8_t length) {
 #    define AUDIO_VISUALIZER_HAS_KEYPEEK
 #endif
 
+// layerhook: same — auto-detected if the keymap also lists kolbenhans/layerhook.
+#if __has_include("layerhook.h")
+#    include "layerhook.h"
+#    define AUDIO_VISUALIZER_HAS_LAYERHOOK
+#endif
+
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 #ifdef AUDIO_VISUALIZER_HAS_KEYPEEK
     if (keypeek_handle_command(data, length)) return;
+#endif
+#ifdef AUDIO_VISUALIZER_HAS_LAYERHOOK
+    if (layerhook_hid_handle_command(data, length)) return;
 #endif
     audio_visualizer_hid_handle_command(data, length);
 }

@@ -2,14 +2,15 @@
 
 QMK Community Modules for custom RGB keyboard firmware.
 
-This repository currently provides two modules:
+This repository currently provides three modules:
 
 | Module                                  | Description                                                                     |
 | --------------------------------------- | ------------------------------------------------------------------------------- |
 | [`key_colors`](#key_colors)             | Per-key, per-layer RGB colors with EEPROM persistence and split synchronization |
 | [`audio_visualizer`](#audio_visualizer) | Audio-reactive RGB relay using VialRGB direct-mode data                         |
+| [`layerhook`](#layerhook)               | Raw HID layer switching for the [layerhook](https://github.com/kolbenhans/layerhook) host app |
 
-Both modules are designed for **Vial-QMK** and are currently used by several custom keyboard projects.
+The modules are designed for **Vial-QMK** and are currently used by several custom keyboard projects.
 
 ---
 
@@ -379,6 +380,29 @@ vial-qmk/
 
 ---
 
+# `layerhook`
+
+Lets the [layerhook](https://github.com/kolbenhans/layerhook) host app switch and query the active layer over Raw HID.
+
+`keymap.json`:
+
+```json
+{ "modules": ["kolbenhans/layerhook"] }
+```
+
+`rules.mk`:
+
+```make
+RAW_ENABLE = yes
+SRC += layerhook_hid.c
+```
+
+Copy `modules/kolbenhans/hid_glue/layerhook_hid.c` next to `rules.mk`.
+
+Combined with `key_colors` and/or `audio_visualizer`, only list the module in `keymap.json` — their glue files pick it up automatically and `layerhook_hid.c` is not needed.
+
+---
+
 # Using Both Modules
 
 `key_colors` and `audio_visualizer` can be used together.
@@ -432,7 +456,11 @@ Required by the `key_colors` WebGUI/HID interface.
 
 Required by the host-side audio visualizer application.
 
-Both files must be copied into the keymap directory and added to the build through `rules.mk`.
+### `layerhook_hid.c`
+
+Only needed when `layerhook` is used without the other two modules.
+
+The files must be copied into the keymap directory and added to the build through `rules.mk`.
 
 ---
 
@@ -603,8 +631,10 @@ qmk-modules/
 │   └── vial-json-rgb-matrix-layout.md
 ├── hid_glue/
 │   ├── audio_visualizer_hid.c
-│   └── key_colors_hid.c
-└── key_colors/
+│   ├── key_colors_hid.c
+│   └── layerhook_hid.c
+├── key_colors/
+└── layerhook/
 ```
 
 ---

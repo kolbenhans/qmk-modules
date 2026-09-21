@@ -24,6 +24,14 @@
 extern bool audio_visualizer_hid_handle_command(uint8_t *data, uint8_t length);
 #endif
 
+// layerhook: same idea — auto-detected if the keymap also lists
+// kolbenhans/layerhook (its config.h steps aside via
+// LAYERHOOK_DISABLE_RAW_HID_HANDLER).
+#if __has_include("layerhook.h")
+#    include "layerhook.h"
+#    define KEY_COLORS_HAS_LAYERHOOK
+#endif
+
 #ifdef RAW_ENABLE
 
 // WebGUI key-color chunk size — bounded by the 32-byte raw HID report minus
@@ -90,6 +98,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 #endif
 #ifdef KEY_COLORS_HAS_AUDIO_VISUALIZER
     if (audio_visualizer_hid_handle_command(data, length)) return;
+#endif
+#ifdef KEY_COLORS_HAS_LAYERHOOK
+    if (layerhook_hid_handle_command(data, length)) return;
 #endif
 
     if (length < 2 || data[0] != 0x02) return;
