@@ -39,6 +39,31 @@ Features include:
 
 The WebGUI communicates with the firmware through HID.
 
+#### MCU / EEPROM compatibility
+
+`key_colors` persists `DYNAMIC_KEYMAP_LAYER_COUNT × RGB_MATRIX_LED_COUNT × 7`
+bytes — on boards with many LEDs and/or layers this can be a sizeable chunk
+of the available EEPROM. Whether it fits, and whether that's fixable, depends
+on the keyboard's [EEPROM driver](https://docs.qmk.fm/drivers/eeprom):
+
+| | MCU / driver | Notes |
+|---|---|---|
+| ✅ Tested | RP2040 (`wear_leveling` rp2040_flash) | PandaKB Sofle RGB |
+| ✅ Tested | STM32F401 (`wear_leveling` legacy) | BCorne M57 |
+| 🟡 Should work, untested | STM32F411 (`wear_leveling` legacy) | Same driver family as F401 |
+| 🟡 Should work, untested | STM32F0xx/F1xx/F3xx (`wear_leveling` embedded_flash / vendor) | Flash-emulated, same expandable model |
+| 🟡 Should work, untested | STM32L0xx/L1xx (vendor, true onboard EEPROM) | Erase can take up to 1s per 1kB used |
+| 🟡 Should work, untested | External I2C/SPI EEPROM chip | Size set via `EXTERNAL_EEPROM_BYTE_COUNT`, easy to have plenty of room |
+| ⚠️ Unlikely to fit | AVR (atmega32u4/32u2, "Pro Micro" boards) | Real onboard EEPROM, fixed at ~1kB, **not** expandable via config — the classic Pro Micro/Elite-C boards this hits first |
+| ❌ Not usable | `EEPROM_DRIVER = transient` | RAM-only, lost on every power cycle — defeats the point of `key_colors`' persistence entirely |
+
+On any driver backed by wear-leveled flash (RP2040, STM32 non-L0/L1), a
+"Dynamic keymaps are configured to use more EEPROM than is available" build
+error can usually be fixed by raising `WEAR_LEVELING_BACKING_SIZE` to a
+concrete number — see [Firmware does not
+fit](#firmware-does-not-fit) below. On AVR's fixed onboard EEPROM there is no
+such knob; if it doesn't fit, it doesn't fit.
+
 ---
 
 ### `audio_visualizer`
@@ -108,6 +133,9 @@ vial-qmk/
 ## 2. Enable a module
 
 Add the module identifier to the `"modules"` array in your keymap's `keymap.json`.
+Most keymaps don't have one yet — if `keyboards/<kb>/keymaps/<km>/keymap.json`
+doesn't exist, create it with just the snippet below, it's a complete, valid
+`keymap.json` on its own.
 
 For `key_colors`:
 
@@ -239,15 +267,17 @@ vial-qmk/
 
 ## Optional keybinding
 
-A key can be assigned to return to the `key_colors` RGB Matrix mode.
+A key can be assigned to return to the `key_colors` RGB Matrix mode. All of
+the following goes in your keymap's `keymap.c` (create one if it doesn't
+exist yet).
 
-Include the module header:
+Include the module header, near the top of the file:
 
 ```c
 #include "key_colors.h"
 ```
 
-Define an unused custom keycode:
+Define an unused custom keycode, also near the top:
 
 ```c
 #define KEYBIND_USER01 0x7E01
@@ -570,18 +600,78 @@ Use the definition appropriate to the module you are enabling.
 
 ---
 
-## Firmware does not fit
+## Dynamic keymaps do not fit
 
-The `key_colors` module stores its configuration persistently.
+If the build fails with:
 
-If the build reports that the wear-leveling storage does not fit, try:
-
-```c
-#define WEAR_LEVELING_BACKING_SIZE \
-    (WEAR_LEVELING_LOGICAL_SIZE * 2)
+```
+static assertion failed: "Dynamic keymaps are configured to use more EEPROM than is available."
 ```
 
-The exact storage requirements depend on the keyboard's EEPROM/wear-leveling configuration.
+the keyboard only has a fixed amount of EEPROM for dynamic keymap data
+(`DYNAMIC_KEYMAP_EEPROM_MAX_ADDR`). The usual dominant consumer once
+`key_colors` is added is `key_colors` itself — it reserves
+`DYNAMIC_KEYMAP_LAYER_COUNT × RGB_MATRIX_LED_COUNT × 7` bytes
+(`EECONFIG_KB_DATA_SIZE` in the module's own `config.h`) *ahead of* Vial's
+combos, key overrides, tap dance and macros, not alongside them — on a
+board with many LEDs and/or layers this alone can already exceed the default
+EEPROM budget, before any Vial feature counts even come into play.
+
+Two ways forward:
+
+* On a wear-leveling-backed MCU (see [MCU / EEPROM
+  compatibility](#mcu--eeprom-compatibility) above), grow the available
+  EEPROM — see [Firmware does not fit](#firmware-does-not-fit) below.
+* Otherwise, lower `DYNAMIC_KEYMAP_LAYER_COUNT` (shrinks both the keymap and
+  `key_colors`' own block) — or, to keep all keymap layers but store colors
+  for fewer of them, override `EECONFIG_KB_DATA_SIZE` directly to a smaller
+  multiple. Lowering `VIAL_COMBO_ENTRIES`/`VIAL_KEY_OVERRIDE_ENTRIES`/
+  `VIAL_TAP_DANCE_ENTRIES`/`DYNAMIC_KEYMAP_MACRO_COUNT` also frees a little
+  room, but rarely enough on its own once `key_colors` is the main
+  consumer.
+* If none of that gets it under budget, `key_colors` doesn't fit on this
+  board/firmware configuration as-is.
+
+## Firmware does not fit
+
+`key_colors` stores its configuration persistently, and needs the extra room
+to already exist — on RP2040 and STM32 (any `wear_leveling`-backed driver),
+the default backing store is usually too small once `key_colors` is added.
+Set a concrete, larger value in your keymap's `config.h`:
+
+```c
+#define WEAR_LEVELING_BACKING_SIZE 16384
+```
+
+Don't write this as `(WEAR_LEVELING_LOGICAL_SIZE * 2)` unless your board's
+`config.h` already defines `WEAR_LEVELING_LOGICAL_SIZE` to a concrete number
+itself — on boards that don't (most don't), the platform's own default
+*derives* `WEAR_LEVELING_LOGICAL_SIZE` from `WEAR_LEVELING_BACKING_SIZE`,
+so the two definitions reference each other and the build fails with
+`'WEAR_LEVELING_LOGICAL_SIZE' undeclared` / "expression in static assertion
+is not an integer" instead.
+
+The exact number needed depends on the keyboard's EEPROM/wear-leveling
+configuration (see the table above). As a rough estimate:
+
+```
+key_colors_bytes = DYNAMIC_KEYMAP_LAYER_COUNT × RGB_MATRIX_LED_COUNT × 7
+needed_logical   = key_colors_bytes + 2000     (headroom: keymap matrix,
+                                                 Vial's own combos/overrides/
+                                                 tap dance/macros, eeconfig)
+                   rounded up to the next multiple of 4096 (flash sector
+                   size on most MCUs)
+
+WEAR_LEVELING_LOGICAL_SIZE = needed_logical
+WEAR_LEVELING_BACKING_SIZE = needed_logical × 2
+```
+
+Example: 8 layers × 72 LEDs → `8×72×7 = 4032`, `+2000 = 6032`, rounded up to
+`8192` → `WEAR_LEVELING_BACKING_SIZE = 16384`. This is only a starting
+estimate, not a guarantee — if the build still doesn't fit, go one step
+further (double `needed_logical` again). This has no effect on AVR's fixed
+onboard EEPROM; see [MCU / EEPROM compatibility](#mcu--eeprom-compatibility)
+above.
 
 ---
 
