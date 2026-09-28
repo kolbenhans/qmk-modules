@@ -19,6 +19,10 @@ The modules are designed for **Vial-QMK** and are currently used by several cust
 ### `key_colors`
 
 Custom per-key and per-layer RGB colors with persistent storage and split-keyboard synchronization.
+<details>
+<summary>Preview Video</summary>
+[![Demo](https://img.youtube.com/vi/6PwMzp1iQR8/maxresdefault.jpg)](https://youtu.be/6PwMzp1iQR8)
+</details>
 
 The module provides the RGB Matrix effect:
 
